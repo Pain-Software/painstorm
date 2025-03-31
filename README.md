@@ -43,14 +43,8 @@ erDiagram
     }
 
     MEASUREMENT {
-        timestamp date
-        int id_city FK
-        int id_stat FK
-        int id_weather FK
-    }
-
-    STATS {
         int id PK
+        timestamp date
         real min_temperature
         real max_temperature
         real temperature
@@ -60,6 +54,8 @@ erDiagram
         real ground_level
         real wind_speed
         real wind_degrees
+        real rain_intensity
+        int id_city FK
     }
 
     WEATHER {
@@ -75,7 +71,6 @@ erDiagram
     }
 
     CITY only one to many MEASUREMENT: has
-    STATS only one to one MEASUREMENT: has
     MEASUREMENT one to many WEATHER_IN_MEASUREMENT: has
     WEATHER one to many WEATHER_IN_MEASUREMENT: has
 ```
