@@ -41,8 +41,8 @@ erDiagram
         string name
         string findName
         string country
-        real longtitude
-        real lattitude
+        real longitude
+        real latitude
     }
 
     MEASUREMENT {
