@@ -30,16 +30,13 @@ CREATE TABLE weather (
     icon TEXT
 );
 
--- Create table for MEASUREMENT.
--- This table references city and stats.
--- Note: Although the provided mermaid schema shows an "id_weather" FK in MEASUREMENT,
--- a separate join table WEATHER_IN_MEASUREMENT is used to associate multiple weather records.
+-- Create table for MEASUREMENT with a surrogate primary key "id"
 CREATE TABLE measurement (
+    id SERIAL PRIMARY KEY,
     timestamp TIMESTAMP NOT NULL,
     id_city BIGINT NOT NULL,
     id_stat INTEGER NOT NULL,
-    -- Optionally, if you still want to include an id_weather FK here uncomment below:
-    -- id_weather INTEGER,
+    -- Optionally, if needed, include id_weather or remove if handled only by the join table.
     CONSTRAINT fk_city
       FOREIGN KEY (id_city)
       REFERENCES city (id)
@@ -48,18 +45,12 @@ CREATE TABLE measurement (
       FOREIGN KEY (id_stat)
       REFERENCES stats (id)
       ON DELETE CASCADE
-    -- If including id_weather:
-    -- ,CONSTRAINT fk_weather
-    --   FOREIGN KEY (id_weather)
-    --   REFERENCES weather (id)
-    --   ON DELETE SET NULL
 );
 
 -- Create join table for associating WEATHER and MEASUREMENT (many-to-many)
 CREATE TABLE weather_in_measurement (
     id_weather INTEGER NOT NULL,
-    id_measurement TIMESTAMP NOT NULL,
-    -- You may choose to add additional unique measurement identifier if needed.
+    id_measurement INTEGER NOT NULL,
     PRIMARY KEY (id_weather, id_measurement),
     CONSTRAINT fk_wim_weather
       FOREIGN KEY (id_weather)
@@ -67,6 +58,6 @@ CREATE TABLE weather_in_measurement (
       ON DELETE CASCADE,
     CONSTRAINT fk_wim_measurement
       FOREIGN KEY (id_measurement)
-      REFERENCES measurement (timestamp)
+      REFERENCES measurement (id)
       ON DELETE CASCADE
 );
