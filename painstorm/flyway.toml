@@ -1,0 +1,30 @@
+databaseType = "PostgreSql"
+id = "cd79bb61-c92f-4af3-b355-17b30eb9a2c4"
+name = "painstorm"
+
+[flyway]
+locations = [ "filesystem:migrations" ]
+mixed = true
+outOfOrder = true
+schemaModelLocation = "schema-model"
+validateMigrationNaming = true
+
+  [flyway.check]
+  majorTolerance = 0
+
+[flywayDesktop]
+developmentEnvironment = "development"
+shadowEnvironment = "shadow"
+
+[redgateCompare]
+filterFile = "filter.rgf"
+
+[redgateCompare.postgresql.options.behavior]
+detectRenames = "identical-only"
+
+[redgateCompare.postgresql.options.ignores]
+ignoreNewlinesInTextObjects = "off"
+
+[environments.target1]
+url = "jdbc:postgresql://pavel-vacha.cz:5432/painstorm"
+schemas = [ "public" ]
