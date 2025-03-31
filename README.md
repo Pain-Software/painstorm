@@ -9,6 +9,9 @@ Je potřeba mít v složce repozitáře `.env`, jenž vypadá následovně
 POSTGRES_USER=user
 POSTGRES_PASSWORD=heslo
 POSTGRES_DB=painstorm
+MONGO_INITDB_ROOT_USERNAME=hehe
+MONGO_INITDB_ROOT_PASSWORD=hehe
+
 ```
 
 ## Požadavky
