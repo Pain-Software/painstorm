@@ -56,6 +56,64 @@ func (w *WeatherRepositoryImpl) GetCityByCoords(lat float64, lng float64) (model
 	return city, err
 }
 
+// GetMeasurements retrieves measurements for a city in specified interval
+func (w *WeatherRepositoryImpl) GetMeasurements(city model.City, from int64, to int64) ([]model.Measurement, error) {
+	measurements := make([]model.Measurement, 0)
+
+	query := "SELECT id, timestamp, id_city, min_temperature, max_temperature, temperature, humidity, pressure, sea_level, ground_level, wind_speed, wind_degrees, rain_intensity" +
+		" FROM Measurement WHERE id_city = $1 AND timestamp BETWEEN $2 AND $3"
+	rows, err := w.DbConn.Query(context.Background(), query, city.ID, helper.NormalizeToNoonUTC(time.Unix(from, 0)), helper.NormalizeToNoonUTC(time.Unix(to, 0)))
+	if err != nil {
+		slog.Error("Error getting measurements: ", err)
+		return make([]model.Measurement, 0), err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var m model.Measurement
+		err = rows.Scan(&m.ID, &m.Timestamp, &m.CityID, &m.MinTemp, &m.MaxTemp, &m.Temperature, &m.Humidity, &m.Pressure, &m.SeaLevel, &m.GroundLevel, &m.WindSpeed, &m.WindDegrees, &m.RainIntensity)
+		if err != nil {
+			slog.Error("Error getting measurements: ", err)
+			continue
+		}
+
+		weatherList, err := w.GetWeatherByMeasurementID(m.ID)
+		if err != nil {
+			slog.Error("Error getting weather for measurement ID: ", m.ID, ":", err)
+		} else {
+			m.Weather = weatherList
+		}
+
+		measurements = append(measurements, m)
+	}
+	return measurements, nil
+}
+
+// GetWeatherByMeasurementID retrieves all weather for measurement
+func (w *WeatherRepositoryImpl) GetWeatherByMeasurementID(measurementID int64) ([]model.MeasurementWeather, error) {
+	query := `
+		SELECT w.id, w.main, w.description, w.icon
+		FROM WEATHER w
+		JOIN WEATHER_IN_MEASUREMENT wim ON wim.id_weather = w.id
+		WHERE wim.id_measurement = $1`
+
+	rows, err := w.DbConn.Query(context.Background(), query, measurementID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	weatherList := make([]model.MeasurementWeather, 0)
+	for rows.Next() {
+		var weather model.MeasurementWeather
+		if err := rows.Scan(&weather.ID, &weather.Main, &weather.Description, &weather.Icon); err != nil {
+			continue
+		}
+		weatherList = append(weatherList, weather)
+	}
+	return weatherList, nil
+}
+
 // GetMissingDates retrieves missing dates for a city from an interval
 func (w *WeatherRepositoryImpl) GetMissingDates(city model.City, from int64, to int64) []time.Time {
 	dates := make([]time.Time, 0)
