@@ -20,7 +20,7 @@ func NewWeatherServiceImpl(weatherRepository repository.WeatherRepository) Weath
 }
 
 // CheckData ensures requested data is stored in DB
-func (service *WeatherServiceImpl) CheckData(city model.City, from int64, to int64) error {
+func (service *WeatherServiceImpl) CheckData(city model.City, from int64, to int64) (model.City, error) {
 	// Get city from DB using name or coords
 	var foundCity model.City
 	var err error
@@ -31,13 +31,13 @@ func (service *WeatherServiceImpl) CheckData(city model.City, from int64, to int
 	}
 	if err != nil {
 		slog.Error("City query failed: ", err)
-		return err
+		return foundCity, err
 	}
 
 	// If no dates missing, return
 	missingDates := service.Repository.GetMissingDates(foundCity, from, to)
 	if len(missingDates) <= 0 {
-		return nil
+		return foundCity, nil
 	}
 
 	// Otherwise update db using API
@@ -54,7 +54,7 @@ func (service *WeatherServiceImpl) CheckData(city model.City, from int64, to int
 			// TODO implement saving to mongo here using measurement
 		}
 	}
-	return nil
+	return foundCity, nil
 }
 
 // GenerateData generates random data for testing purposes
@@ -66,6 +66,10 @@ func (service *WeatherServiceImpl) GenerateData(count int) {
 	for _, measurement := range measurements {
 		service.Repository.AddMeasurement(measurement)
 	}
+}
+
+func (service *WeatherServiceImpl) RetrieveMeasurements(city model.City, from int64, to int64) ([]model.Measurement, error) {
+	return service.Repository.GetMeasurements(city, from, to)
 }
 
 // RainIntensity finds cities with specified rain intensity in specified date interval
