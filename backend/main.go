@@ -19,7 +19,7 @@ import (
 func main() {
 	slog.Info("Painstorm backend has started.")
 
-	err := godotenv.Load()
+	err := godotenv.Load("../.env")
 	if err != nil {
 		fmt.Println("Error loading .env file")
 	}
@@ -29,11 +29,11 @@ func main() {
 
 	// Repository
 	connURL := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
-		os.Getenv("PG_USER"),
-		os.Getenv("PG_PASSW"),
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_PASSWORD"),
 		cfg.App.DBHost,
 		cfg.App.DBPort,
-		os.Getenv("PG_DB"))
+		os.Getenv("POSTGRES_DB"))
 	conn, err := pgxpool.New(context.Background(), connURL)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
