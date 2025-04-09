@@ -28,11 +28,11 @@ func main() {
 	cfg := config.Get()
 
 	// Repository
-	connURL := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
+	connURL := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		os.Getenv("POSTGRES_USER"),
 		os.Getenv("POSTGRES_PASSWORD"),
-		cfg.App.DBHost,
-		cfg.App.DBPort,
+		os.Getenv("POSTGRES_HOST"),
+		os.Getenv("POSTGRES_PORT"),
 		os.Getenv("POSTGRES_DB"))
 	conn, err := pgxpool.New(context.Background(), connURL)
 	if err != nil {
