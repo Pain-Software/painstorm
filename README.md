@@ -1,6 +1,22 @@
 # painstorm
 Semestrální projekt pro udělení zápočtu na předmět MTI/RDB (Řízení databází) 2024/25
 
+
+## Databáze a verzování
+
+Je potřeba mít v složce repozitáře `.env`, jenž vypadá následovně 
+```
+POSTGRES_USER=user
+POSTGRES_PASSWORD=heslo
+POSTGRES_DB=painstorm
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+OWM_API_KEY=api_klic
+MONGO_INITDB_ROOT_USERNAME=hehe
+MONGO_INITDB_ROOT_PASSWORD=hehe
+
+```
+
 ## Požadavky
 - Dle zadání uživatele stahovat data o aktuálním počasí, n dní do minulosti pro dané místo
     - Maximálně 7 dní dozadu
@@ -28,19 +44,13 @@ erDiagram
         string name
         string findName
         string country
-        real longtitude
-        real lattitude
+        real longitude
+        real latitude
     }
 
     MEASUREMENT {
-        timestamp date
-        int id_city FK
-        int id_stat FK
-        int id_weather FK
-    }
-
-    STATS {
         int id PK
+        timestamp date
         real min_temperature
         real max_temperature
         real temperature
@@ -50,6 +60,8 @@ erDiagram
         real ground_level
         real wind_speed
         real wind_degrees
+        real rain_intensity
+        int id_city FK
     }
 
     WEATHER {
@@ -65,7 +77,6 @@ erDiagram
     }
 
     CITY only one to many MEASUREMENT: has
-    STATS only one to one MEASUREMENT: has
     MEASUREMENT one to many WEATHER_IN_MEASUREMENT: has
     WEATHER one to many WEATHER_IN_MEASUREMENT: has
 ```
