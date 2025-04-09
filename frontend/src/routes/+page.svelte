@@ -1,16 +1,26 @@
 <script lang="ts">
+    import { env } from '$env/dynamic/public';
 	import Download from 'lucide-svelte/icons/download';
-
 	import { Button } from '$lib/components/ui/button';
 	import { DatePickerWithRange } from '$lib/components/ui/datepicker';
     import PlaceStats from '$lib/fragments/place-stats.svelte';
     import PlacesTempDiffs from '$lib/fragments/places-temp-diffs.svelte';
     import PlacesWithRainIntensity from '$lib/fragments/places-with-rain-intensity.svelte';
 	import { Input } from '$lib/components/ui/input';
+    import { Indicator } from '$lib/components/ui/indicator';
+	import { onMount } from "svelte";
 	
-    
+    let api: null | boolean = $state(null);
     let place = 'Testovací název místa';
 
+    onMount(async () => {
+        const route = new URL("/api/version", env.PUBLIC_BACKEND_URL);
+        const response = await fetch(route);
+        
+        api = response.ok;
+
+        const data = await response.json();
+    })
 
 </script>
 
@@ -27,6 +37,9 @@
             <Download class="mr-2 h-4 w-4" />
             Hledat
         </Button>
+        <Indicator variant={api == null ? "default" : api ? "online" : "offline"}>
+            API
+        </Indicator>
     </div>
 </div>
 
