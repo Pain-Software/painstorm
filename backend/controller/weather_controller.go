@@ -29,7 +29,19 @@ func (controller *WeatherController) Version(ctx *gin.Context) {
 	slog.Info("API version sent")
 }
 
-// Retrieve obtains measurement data from db
+// Retrieve 		godoc
+// @Summary			Retrieve weather measurements
+// @Description		Retrieves weather measurements for a given city or coordinates within a specified time interval
+// @Tags			weather
+// @Accept			json
+// @Produce			application/json
+// @Param			place query string false "City name"
+// @Param			latitude query number false "Latitude of the location"
+// @Param			longitude query number false "Longitude of the location"
+// @Param			from query string true "Start date in YYYY-MM-DD format"
+// @Param			to query string true "End date in YYYY-MM-DD format"
+// @Success 		200 {object} data.Response{data=object} "Successful response with a list of cities"
+// @Router			/retrieve [get]
 func (controller *WeatherController) Retrieve(ctx *gin.Context) {
 	// Retrieving params
 	var req data.RetrieveRequest
@@ -72,7 +84,18 @@ func (controller *WeatherController) Retrieve(ctx *gin.Context) {
 	slog.Info("Weather data retrieved")
 }
 
-// Current downloads data for location for n days in the past
+// Current 		godoc
+// @Summary			Download and update recent weather data
+// @Description		Downloads weather data for a location for the past N days (default 1 day)
+// @Tags			weather
+// @Accept			json
+// @Produce			application/json
+// @Param			place query string false "City name"
+// @Param			latitude query number false "Latitude of the location"
+// @Param			longitude query number false "Longitude of the location"
+// @Param			count query int false "Number of days in the past to fetch data for (default is 1)"
+// @Success			200 {object} data.Response{}
+// @Router			/current [get]
 func (controller *WeatherController) Current(ctx *gin.Context) {
 	// Retrieving params
 	var req data.CurrentRequest
@@ -115,7 +138,15 @@ func (controller *WeatherController) Current(ctx *gin.Context) {
 	slog.Info("Current weather updated")
 }
 
-// Generate generates n random records
+// Generate 		godoc
+// @Summary			Generate random weather data
+// @Description		Generates and stores N random weather records (default is 1)
+// @Tags			weather
+// @Accept			json
+// @Produce			application/json
+// @Param			count query int false "Number of random records to generate (default is 1)"
+// @Success			200 {object} data.Response{}
+// @Router			/generate [get]
 func (controller *WeatherController) Generate(ctx *gin.Context) {
 	// Retrieving params
 	var req data.GenerateRequest
@@ -141,7 +172,17 @@ func (controller *WeatherController) Generate(ctx *gin.Context) {
 	slog.Info("Generated " + strconv.Itoa(req.Count) + " weather records")
 }
 
-// RainIntensity retrieves cities with rain of specified intensity in specified time interval
+// RainIntensity 		godoc
+// @Summary			Get cities by rain intensity
+// @Description		Retrieves cities that experienced rain of the specified intensity within a time interval
+// @Tags			weather
+// @Accept			json
+// @Produce			application/json
+// @Param			from query string true "Start date in YYYY-MM-DD format"
+// @Param			to query string true "End date in YYYY-MM-DD format"
+// @Param			intensity query number true "Rain intensity threshold (e.g., mm/hour)"
+// @Success			200 {object} data.Response{}
+// @Router			/rain-intensity [get]
 func (controller *WeatherController) RainIntensity(ctx *gin.Context) {
 	// Retrieving params
 	var req data.RainRequest

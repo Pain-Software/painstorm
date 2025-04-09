@@ -1,0 +1,142 @@
+definitions:
+  data.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      status:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /current:
+    get:
+      consumes:
+      - application/json
+      description: Downloads weather data for a location for the past N days (default
+        1 day)
+      parameters:
+      - description: City name
+        in: query
+        name: place
+        type: string
+      - description: Latitude of the location
+        in: query
+        name: latitude
+        type: number
+      - description: Longitude of the location
+        in: query
+        name: longitude
+        type: number
+      - description: Number of days in the past to fetch data for (default is 1)
+        in: query
+        name: count
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.Response'
+      summary: Download and update recent weather data
+      tags:
+      - weather
+  /generate:
+    get:
+      consumes:
+      - application/json
+      description: Generates and stores N random weather records (default is 1)
+      parameters:
+      - description: Number of random records to generate (default is 1)
+        in: query
+        name: count
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.Response'
+      summary: Generate random weather data
+      tags:
+      - weather
+  /rain-intensity:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves cities that experienced rain of the specified intensity
+        within a time interval
+      parameters:
+      - description: Start date in YYYY-MM-DD format
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: End date in YYYY-MM-DD format
+        in: query
+        name: to
+        required: true
+        type: string
+      - description: Rain intensity threshold (e.g., mm/hour)
+        in: query
+        name: intensity
+        required: true
+        type: number
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/data.Response'
+      summary: Get cities by rain intensity
+      tags:
+      - weather
+  /retrieve:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves weather measurements for a given city or coordinates
+        within a specified time interval
+      parameters:
+      - description: City name
+        in: query
+        name: place
+        type: string
+      - description: Latitude of the location
+        in: query
+        name: latitude
+        type: number
+      - description: Longitude of the location
+        in: query
+        name: longitude
+        type: number
+      - description: Start date in YYYY-MM-DD format
+        in: query
+        name: from
+        required: true
+        type: string
+      - description: End date in YYYY-MM-DD format
+        in: query
+        name: to
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response with a list of cities
+          schema:
+            allOf:
+            - $ref: '#/definitions/data.Response'
+            - properties:
+                data:
+                  type: object
+              type: object
+      summary: Retrieve weather measurements
+      tags:
+      - weather
+swagger: "2.0"

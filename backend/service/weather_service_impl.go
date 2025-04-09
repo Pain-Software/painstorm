@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"log/slog"
 	"painstorm/helper"
 	"painstorm/model"
@@ -35,13 +34,6 @@ func (service *WeatherServiceImpl) CheckData(city model.City, from int64, to int
 		return foundCity, err
 	}
 
-	// Limit downloaded data range
-	rangeLimit := int64(86400 * 16) // Limit of 14 days
-	if (to - from) > rangeLimit {
-		from = to - rangeLimit
-	}
-	fmt.Println(rangeLimit)
-	fmt.Println(time.Unix(from, 0), time.Unix(to, 0))
 	// If no dates missing, return
 	missingDates := service.Repository.GetMissingDates(foundCity, from, to)
 	if len(missingDates) <= 0 {

@@ -11,6 +11,7 @@ import (
 	"os"
 	"painstorm/config"
 	"painstorm/controller"
+	_ "painstorm/docs"
 	"painstorm/repository"
 	"painstorm/router"
 	"painstorm/service"
