@@ -40,7 +40,7 @@ func (controller *WeatherController) Version(ctx *gin.Context) {
 // @Param			longitude query number false "Longitude of the location"
 // @Param			from query string true "Start date in YYYY-MM-DD format"
 // @Param			to query string true "End date in YYYY-MM-DD format"
-// @Success 		200 {object} data.Response{data=object} "Successful response with a list of cities"
+// @Success 		200 {array} model.Measurement
 // @Router			/retrieve [get]
 func (controller *WeatherController) Retrieve(ctx *gin.Context) {
 	// Retrieving params
@@ -74,13 +74,7 @@ func (controller *WeatherController) Retrieve(ctx *gin.Context) {
 		return
 	}
 
-	// Respond
-	webResponse := data.Response{
-		Code:   http.StatusOK,
-		Status: "OK",
-		Data:   measurements,
-	}
-	ctx.JSON(http.StatusOK, webResponse)
+	ctx.JSON(http.StatusOK, measurements)
 	slog.Info("Weather data retrieved")
 }
 
@@ -94,7 +88,7 @@ func (controller *WeatherController) Retrieve(ctx *gin.Context) {
 // @Param			latitude query number false "Latitude of the location"
 // @Param			longitude query number false "Longitude of the location"
 // @Param			count query int false "Number of days in the past to fetch data for (default is 1)"
-// @Success			200 {object} data.Response{}
+// @Success			200 {array} model.Measurement
 // @Router			/current [get]
 func (controller *WeatherController) Current(ctx *gin.Context) {
 	// Retrieving params
@@ -128,13 +122,14 @@ func (controller *WeatherController) Current(ctx *gin.Context) {
 		return
 	}
 
-	// Respond
-	webResponse := data.Response{
-		Code:   http.StatusOK,
-		Status: "OK",
-		Data:   nil,
+	// Querying for measurement data
+	measurements, err := controller.service.RetrieveMeasurements(city, from, to)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
-	ctx.JSON(http.StatusOK, webResponse)
+
+	ctx.JSON(http.StatusOK, measurements)
 	slog.Info("Current weather updated")
 }
 
@@ -145,7 +140,7 @@ func (controller *WeatherController) Current(ctx *gin.Context) {
 // @Accept			json
 // @Produce			application/json
 // @Param			count query int false "Number of random records to generate (default is 1)"
-// @Success			200 {object} data.Response{}
+// @Success			200 {object} interface{} "null response"
 // @Router			/generate [get]
 func (controller *WeatherController) Generate(ctx *gin.Context) {
 	// Retrieving params
@@ -162,13 +157,7 @@ func (controller *WeatherController) Generate(ctx *gin.Context) {
 	// Generate and insert data
 	controller.service.GenerateData(req.Count)
 
-	// Respond
-	webResponse := data.Response{
-		Code:   http.StatusOK,
-		Status: "OK",
-		Data:   nil,
-	}
-	ctx.JSON(http.StatusOK, webResponse)
+	ctx.JSON(http.StatusOK, nil)
 	slog.Info("Generated " + strconv.Itoa(req.Count) + " weather records")
 }
 
@@ -181,7 +170,7 @@ func (controller *WeatherController) Generate(ctx *gin.Context) {
 // @Param			from query string true "Start date in YYYY-MM-DD format"
 // @Param			to query string true "End date in YYYY-MM-DD format"
 // @Param			intensity query number true "Rain intensity threshold (e.g., mm/hour)"
-// @Success			200 {object} data.Response{}
+// @Success			200 {array} model.City
 // @Router			/rain-intensity [get]
 func (controller *WeatherController) RainIntensity(ctx *gin.Context) {
 	// Retrieving params
@@ -195,12 +184,6 @@ func (controller *WeatherController) RainIntensity(ctx *gin.Context) {
 	// Query DB
 	cities := controller.service.RainIntensity(req.From, req.To, req.Intensity)
 
-	// Respond
-	webResponse := data.Response{
-		Code:   http.StatusOK,
-		Status: "OK",
-		Data:   cities,
-	}
-	ctx.JSON(http.StatusOK, webResponse)
+	ctx.JSON(http.StatusOK, cities)
 	slog.Info("Found cities with rain intensity")
 }
