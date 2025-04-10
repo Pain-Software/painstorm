@@ -58,7 +58,10 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/data.Response"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Measurement"
+                            }
                         }
                     }
                 }
@@ -87,10 +90,8 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/data.Response"
-                        }
+                        "description": "null response",
+                        "schema": {}
                     }
                 }
             }
@@ -135,7 +136,10 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/data.Response"
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.City"
+                            }
                         }
                     }
                 }
@@ -190,21 +194,12 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Successful response with a list of cities",
+                        "description": "OK",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/data.Response"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "object"
-                                        }
-                                    }
-                                }
-                            ]
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/model.Measurement"
+                            }
                         }
                     }
                 }
@@ -212,14 +207,92 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "data.Response": {
+        "model.City": {
             "type": "object",
             "properties": {
-                "code": {
+                "country": {
+                    "type": "string"
+                },
+                "find_name": {
+                    "type": "string"
+                },
+                "id": {
                     "type": "integer"
                 },
-                "data": {},
-                "status": {
+                "latitude": {
+                    "type": "number"
+                },
+                "longitude": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.Measurement": {
+            "type": "object",
+            "properties": {
+                "city_id": {
+                    "type": "integer"
+                },
+                "ground_level": {
+                    "type": "number"
+                },
+                "humidity": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "max_temperature": {
+                    "type": "number"
+                },
+                "min_temperature": {
+                    "type": "number"
+                },
+                "pressure": {
+                    "type": "number"
+                },
+                "rain_intensity": {
+                    "type": "number"
+                },
+                "sea_level": {
+                    "type": "number"
+                },
+                "temperature": {
+                    "type": "number"
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "weather": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.MeasurementWeather"
+                    }
+                },
+                "wind_degrees": {
+                    "type": "number"
+                },
+                "wind_speed": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.MeasurementWeather": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "main": {
                     "type": "string"
                 }
             }

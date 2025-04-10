@@ -1,10 +1,61 @@
 definitions:
-  data.Response:
+  model.City:
     properties:
-      code:
+      country:
+        type: string
+      find_name:
+        type: string
+      id:
         type: integer
-      data: {}
-      status:
+      latitude:
+        type: number
+      longitude:
+        type: number
+      name:
+        type: string
+    type: object
+  model.Measurement:
+    properties:
+      city_id:
+        type: integer
+      ground_level:
+        type: number
+      humidity:
+        type: integer
+      id:
+        type: integer
+      max_temperature:
+        type: number
+      min_temperature:
+        type: number
+      pressure:
+        type: number
+      rain_intensity:
+        type: number
+      sea_level:
+        type: number
+      temperature:
+        type: number
+      timestamp:
+        type: string
+      weather:
+        items:
+          $ref: '#/definitions/model.MeasurementWeather'
+        type: array
+      wind_degrees:
+        type: number
+      wind_speed:
+        type: number
+    type: object
+  model.MeasurementWeather:
+    properties:
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      main:
         type: string
     type: object
 info:
@@ -39,7 +90,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/data.Response'
+            items:
+              $ref: '#/definitions/model.Measurement'
+            type: array
       summary: Download and update recent weather data
       tags:
       - weather
@@ -57,9 +110,8 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/data.Response'
+          description: null response
+          schema: {}
       summary: Generate random weather data
       tags:
       - weather
@@ -91,7 +143,9 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/data.Response'
+            items:
+              $ref: '#/definitions/model.City'
+            type: array
       summary: Get cities by rain intensity
       tags:
       - weather
@@ -128,14 +182,11 @@ paths:
       - application/json
       responses:
         "200":
-          description: Successful response with a list of cities
+          description: OK
           schema:
-            allOf:
-            - $ref: '#/definitions/data.Response'
-            - properties:
-                data:
-                  type: object
-              type: object
+            items:
+              $ref: '#/definitions/model.Measurement'
+            type: array
       summary: Retrieve weather measurements
       tags:
       - weather
