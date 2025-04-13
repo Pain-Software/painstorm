@@ -14,4 +14,5 @@ type WeatherRepository interface {
 	GetMissingDates(city model.City, from int64, to int64) []time.Time
 	GetCitiesWithIntensity(from int64, to int64, intensity float64) []model.City
 	GetCitiesWithMaxTempDiff(date string) []model.CityWithTempDiff
+	GetStableData(city model.City, from string, to string, weatherType string) ([][]model.Measurement, error)
 }

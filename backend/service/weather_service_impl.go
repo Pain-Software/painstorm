@@ -84,7 +84,6 @@ func (service *WeatherServiceImpl) TempDiff(date string) []model.CityWithTempDif
 }
 
 // StableWeather retrieves dates with constant weather in interval
-func (service *WeatherServiceImpl) StableWeather(city model.City, from int64, to int64, weatherType string) []time.Time {
-	//TODO implement me (Dont forget to use helper.NormalizeToNoonUTC() for dates)
-	panic("implement me")
+func (service *WeatherServiceImpl) StableWeather(city model.City, from string, to string, weatherType string) ([][]model.Measurement, error) {
+	return service.Repository.GetStableData(city, from, to, weatherType)
 }

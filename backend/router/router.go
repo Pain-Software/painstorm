@@ -26,6 +26,7 @@ func NewRouter(weatherController *controller.WeatherController) *gin.Engine {
 	searchRouter.GET("/generate", weatherController.Generate)
 	searchRouter.GET("/intensity", weatherController.RainIntensity)
 	searchRouter.GET("/temp-diff", weatherController.TempDiff)
+	searchRouter.GET("/stable-weather", weatherController.StableWeather)
 
 	return router
 }

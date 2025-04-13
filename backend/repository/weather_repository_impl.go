@@ -192,3 +192,92 @@ func (w *WeatherRepositoryImpl) GetCitiesWithMaxTempDiff(date string) []model.Ci
 	}
 	return cities
 }
+
+// GetMeasurementsFromMongo retrieves measurements from MongoDB based on from_date, to_date, city ID, and clouds
+func (w *WeatherRepositoryImpl) GetMeasurementsFromMongo(cityID int64, fromDate time.Time, toDate time.Time) ([]model.Measurement, error) {
+
+	toDate = time.Date(toDate.Year(), toDate.Month(), toDate.Day(), 23, 59, 59, 999999000, toDate.Location())
+
+	// Build the query filter
+	filter := map[string]interface{}{
+		"cityid": cityID,
+		"timestamp": map[string]interface{}{
+			"$gte": fromDate,
+			"$lte": toDate,
+		},
+	}
+
+	cursor, err := w.MongoCollection.Find(context.Background(), filter)
+
+	if err != nil {
+		slog.Error("Error querying MongoDB for measurements: ", err)
+		return nil, err
+	}
+	defer cursor.Close(context.Background())
+
+	var measurements []model.Measurement
+
+	for cursor.Next(context.Background()) {
+		var m model.Measurement
+
+		err := cursor.Decode(&m)
+		if err != nil {
+			slog.Error("Error decoding measurement from MongoDB: ", err)
+			continue
+		}
+		measurements = append(measurements, m)
+	}
+
+	// Check for any cursor errors
+	if err := cursor.Err(); err != nil {
+		slog.Error("Cursor error: ", err)
+		return nil, err
+	}
+
+	return measurements, nil
+}
+
+func (w *WeatherRepositoryImpl) GetStableData(city model.City, from string, to string, weatherType string) ([][]model.Measurement, error) {
+	query := "WITH daily_weather AS ( SELECT m.timestamp::DATE AS measurement_date, w.main AS weather_type FROM measurement m JOIN weather_in_measurement wim ON m.id = wim.id_measurement JOIN weather w ON wim.id_weather = w.id WHERE m.id_city = $1 AND m.timestamp BETWEEN $2 AND $3 AND w.main = $4 GROUP BY m.timestamp::DATE, w.main ), groups AS ( SELECT measurement_date, measurement_date - (ROW_NUMBER() OVER (ORDER BY measurement_date))::integer AS group_id FROM daily_weather ) SELECT MIN(measurement_date) AS fromDate, MAX(measurement_date) AS toDate FROM groups GROUP BY group_id HAVING COUNT(*) > 1 ORDER BY fromDate"
+	rows, err := w.DbConn.Query(context.Background(), query, city.ID, from, to, weatherType)
+	if err != nil {
+		slog.Error("Error executing query: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var dates []struct {
+		FromDate time.Time
+		ToDate   time.Time
+	}
+	for rows.Next() {
+		var date struct {
+			FromDate time.Time
+			ToDate   time.Time
+		}
+		err = rows.Scan(&date.FromDate, &date.ToDate)
+		if err != nil {
+			slog.Error("Error scanning row: %v", err)
+			continue
+		}
+
+		dates = append(dates, date)
+	}
+	if len(dates) == 0 {
+		return nil, nil
+	}
+
+	var allMeasurements [][]model.Measurement
+
+	for _, date := range dates {
+		measurements, err := w.GetMeasurementsFromMongo(city.ID, date.FromDate, date.ToDate)
+		if err != nil {
+			slog.Error("Error retrieving measurements from MongoDB: ", err)
+			continue
+		}
+
+		allMeasurements = append(allMeasurements, measurements)
+	}
+
+	return allMeasurements, nil
+}

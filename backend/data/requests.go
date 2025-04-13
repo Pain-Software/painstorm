@@ -14,6 +14,15 @@ type TempDiffRequest struct {
 	Date string `form:"date"`
 }
 
+type StableWeatherRequest struct {
+	Place       string  `form:"place"`
+	Latitude    float64 `form:"lat"`
+	Longitude   float64 `form:"lon"`
+	From        string  `form:"from"`
+	To          string  `form:"to"`
+	WeatherType string  `form:"weatherType"`
+}
+
 type CurrentRequest struct {
 	Place     string  `form:"place"`
 	Latitude  float64 `form:"lat"`

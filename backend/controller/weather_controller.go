@@ -224,3 +224,71 @@ func (controller *WeatherController) TempDiff(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, cities)
 	slog.Info("Found cities with temp diff")
 }
+
+// StableWeather 		godoc
+// @Summary			Get stable weather dates
+// @Description		Retrieves dates with stable weather for a given city or coordinates within a specified time interval
+// @Tags			weather
+// @Accept			json
+// @Produce			application/json
+// @Param			place query string false "City name"
+// @Param			lat query number false "Latitude of the location"
+// @Param			lon query number false "Longitude of the location"
+// @Param			from query string true "Start date in YYYY-MM-DD format"
+// @Param			to query string true "End date in YYYY-MM-DD format"
+// @Param			weatherType query string true "Weather type (e.g., rain, snow, clear)"
+// @Success			200 {array of arrays} [][]model.Measurement
+// @Router			/stable-weather [get]
+func (controller *WeatherController) StableWeather(ctx *gin.Context) {
+	// Retrieving params
+	var req data.StableWeatherRequest
+	err := ctx.ShouldBindQuery(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if req.Place == "" && (req.Latitude == 0 || req.Longitude == 0) {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Either place or lat and lon is required"})
+		return
+	}
+
+	city := model.City{
+		Name:      req.Place,
+		Latitude:  req.Latitude,
+		Longitude: req.Longitude,
+	}
+
+	fromDate, err := time.Parse("2006-01-02", req.From)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format from"})
+		return
+	}
+
+	toDate, err := time.Parse("2006-01-02", req.To)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format to"})
+		return
+	}
+
+	// Downloading needed data
+	city, err = controller.service.CheckData(city, fromDate.Unix(), toDate.Unix())
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	dates, err := controller.service.StableWeather(city, req.From, req.To, req.WeatherType)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if dates == nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"message": "No stable weather data found"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, dates)
+	slog.Info("Found stable weather dates")
+
+}
