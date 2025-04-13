@@ -9,9 +9,11 @@ RUN adduser \
   --uid 65532 \
   small-user
 
-WORKDIR $GOPATH/src/go_project/
+COPY .env /app/.env     
 
-COPY . .
+WORKDIR /go/src/go_project/
+
+COPY backend/. .           
 
 RUN go mod download
 RUN go mod verify

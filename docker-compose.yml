@@ -15,9 +15,11 @@
         - postgres_data:/var/lib/postgresql/data
 
     backend:
+      env_file:
+      - .env
       build:
-        context: ./backend
-        dockerfile: Dockerfile
+        context: .
+        dockerfile: ./backend/Dockerfile
       container_name: go_backend
       restart: unless-stopped
       depends_on:

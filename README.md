@@ -4,7 +4,7 @@ Semestrální projekt pro udělení zápočtu na předmět MTI/RDB (Řízení da
 
 ## Databáze a verzování
 
-Je potřeba mít v složce repozitáře `.env`, jenž vypadá následovně 
+Je potřeba mít v složce repozitáře `.env`, jenž vypadá následovně  (platí pro lokál)
 ```
 POSTGRES_USER=user
 POSTGRES_PASSWORD=heslo
@@ -15,8 +15,15 @@ OWM_API_KEY=api_klic
 MONGO_INITDB_ROOT_USERNAME=hehe
 MONGO_INITDB_ROOT_PASSWORD=hehe
 MONGO_URI=mongodb://localhost:27017
+```
+
+V případě `docker compose up -d` nezapomeňte adresy hostů upravit jako:
 
 ```
+POSTGRES_HOST=postgres
+MONGO_URI=mongodb://mongo:27017
+```
+
 
 ## Požadavky
 - Dle zadání uživatele stahovat data o aktuálním počasí, n dní do minulosti pro dané místo

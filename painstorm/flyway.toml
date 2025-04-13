@@ -28,3 +28,7 @@ ignoreNewlinesInTextObjects = "off"
 [environments.target1]
 url = "jdbc:postgresql://pavel-vacha.cz:5432/painstorm"
 schemas = [ "public" ]
+
+[environments.target2]
+url = "jdbc:postgresql://localhost:5432/painstorm"
+schemas = [ "public" ]
