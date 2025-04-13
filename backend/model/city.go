@@ -8,3 +8,8 @@ type City struct {
 	Longitude float64 `json:"longitude,omitempty" db:"longitude"`
 	Latitude  float64 `json:"latitude,omitempty" db:"latitude"`
 }
+
+type CityWithTempDiff struct {
+	City
+	TempDiff *float64 `json:"tempDiff,omitempty"`
+}

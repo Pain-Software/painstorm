@@ -78,9 +78,9 @@ func (service *WeatherServiceImpl) RainIntensity(from int64, to int64, intensity
 }
 
 // TempDiff retrieves cities with the highest temp difference on specified date
-func (service *WeatherServiceImpl) TempDiff(date int64) []model.City {
-	//TODO implement me (Dont forget to use helper.NormalizeToNoonUTC() for dates)
-	panic("implement me")
+func (service *WeatherServiceImpl) TempDiff(date string) []model.CityWithTempDiff {
+	return service.Repository.GetCitiesWithMaxTempDiff(date)
+
 }
 
 // StableWeather retrieves dates with constant weather in interval

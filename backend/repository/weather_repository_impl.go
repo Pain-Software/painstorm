@@ -2,20 +2,24 @@ package repository
 
 import (
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"log/slog"
 	"painstorm/helper"
 	"painstorm/model"
 	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type WeatherRepositoryImpl struct {
-	DbConn *pgxpool.Pool
+	DbConn          *pgxpool.Pool
+	MongoCollection *mongo.Collection
 }
 
-func NewWeatherRepositoryImpl(conn *pgxpool.Pool) WeatherRepository {
+func NewWeatherRepositoryImpl(conn *pgxpool.Pool, mongoCollection *mongo.Collection) WeatherRepository {
 	return &WeatherRepositoryImpl{
-		DbConn: conn,
+		DbConn:          conn,
+		MongoCollection: mongoCollection,
 	}
 }
 
@@ -36,6 +40,14 @@ func (w *WeatherRepositoryImpl) AddMeasurement(m model.Measurement) {
 		err = w.DbConn.QueryRow(context.Background(), "INSERT INTO weather_in_measurement (id_weather, id_measurement) VALUES ($1, $2) RETURNING id_measurement", weather.ID, m.ID).Scan(&m.ID)
 		if err != nil {
 			slog.Error("Error adding measurement: ", err)
+		}
+	}
+
+	// Insert into MongoDB
+	if w.MongoCollection != nil {
+		_, err := w.MongoCollection.InsertOne(context.Background(), m)
+		if err != nil {
+			slog.Error("Error adding measurement to MongoDB: ", err)
 		}
 	}
 }
@@ -150,6 +162,27 @@ func (w *WeatherRepositoryImpl) GetCitiesWithIntensity(from int64, to int64, int
 		var c model.City
 
 		err = rows.Scan(&c.ID, &c.Name, &c.FindName, &c.Country, &c.Longitude, &c.Latitude)
+		if err != nil {
+			slog.Error("Error scanning row: %v", err)
+			continue
+		}
+
+		cities = append(cities, c)
+	}
+	return cities
+}
+
+func (w *WeatherRepositoryImpl) GetCitiesWithMaxTempDiff(date string) []model.CityWithTempDiff {
+	cities := make([]model.CityWithTempDiff, 0)
+	rows, err := w.DbConn.Query(context.Background(), "WITH max_temp_diff AS ( SELECT m.id_city, ABS(MAX(m.max_temperature) - MIN(m.min_temperature)) AS temperature_difference FROM measurement m WHERE m.timestamp::date = $1 GROUP BY m.id_city ) SELECT id, name, findName, country, longitude, latitude, md.temperature_difference as temp_diff FROM max_temp_diff md JOIN city c ON md.id_city = c.id ORDER BY md.temperature_difference DESC LIMIT 3", date)
+	if err != nil {
+		slog.Error("Error executing query: %v", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var c model.CityWithTempDiff
+
+		err = rows.Scan(&c.ID, &c.Name, &c.FindName, &c.Country, &c.Longitude, &c.Latitude, &c.TempDiff)
 		if err != nil {
 			slog.Error("Error scanning row: %v", err)
 			continue

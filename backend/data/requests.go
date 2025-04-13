@@ -10,6 +10,10 @@ type RainRequest struct {
 	Intensity float64 `form:"intensity"`
 }
 
+type TempDiffRequest struct {
+	Date string `form:"date"`
+}
+
 type CurrentRequest struct {
 	Place     string  `form:"place"`
 	Latitude  float64 `form:"lat"`

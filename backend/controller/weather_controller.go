@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"github.com/gin-gonic/gin"
 	"log/slog"
 	"net/http"
 	"painstorm/data"
@@ -9,6 +8,8 @@ import (
 	"painstorm/service"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type WeatherController struct {
@@ -186,4 +187,40 @@ func (controller *WeatherController) RainIntensity(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, cities)
 	slog.Info("Found cities with rain intensity")
+}
+
+// RainIntensity 		godoc
+// @Summary			Get cities with max temperature difference LIMIT 3
+// @Description		Retrieves cities that experienced the highest temperature difference on a given date
+// @Tags			weather
+// @Produce			application/json
+// @Param			date query string true "Start date in YYYY-MM-DD format"
+// @Success			200 {array} model.CityWithTempDiff
+// @Router			/rain-intensity [get]
+func (controller *WeatherController) TempDiff(ctx *gin.Context) {
+	// Retrieving params
+	var req data.TempDiffRequest
+	err := ctx.ShouldBindQuery(&req)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.Date == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Date is required"})
+		return
+	}
+
+	// Parse the date string to a time.Time object
+	// Assuming the date is in the format "YYYY-MM-DD"
+	parsedDate, err := time.Parse("2006-01-02", req.Date)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid date format"})
+		return
+	}
+
+	cities := controller.service.TempDiff(parsedDate.Format("2006-01-02"))
+
+	ctx.JSON(http.StatusOK, cities)
+	slog.Info("Found cities with temp diff")
 }

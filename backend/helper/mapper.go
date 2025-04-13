@@ -28,6 +28,7 @@ func MapWeatherDataToMeasurement(wd data.WeatherData, cityID int64) model.Measur
 	measurement.Temperature = wd.Main.Temp
 	measurement.Humidity = wd.Main.Humidity
 	measurement.Pressure = float64(wd.Main.Pressure)
+	measurement.Clouds = wd.Clouds.All
 
 	measurement.WindSpeed = wd.Wind.Speed
 	measurement.WindDegrees = float64(wd.Wind.Deg)

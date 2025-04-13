@@ -17,6 +17,8 @@ type Measurement struct {
 	WindDegrees   float64              `json:"wind_degrees,omitempty"`
 	RainIntensity float64              `json:"rain_intensity,omitempty"`
 	Weather       []MeasurementWeather `json:"weather"`
+	Clouds        int                  `json:"clouds,omitempty"`
+	Cnt           int                  `json:"cnt,omitempty"`
 }
 
 type MeasurementWeather struct {

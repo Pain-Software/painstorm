@@ -1,11 +1,12 @@
 package router
 
 import (
+	"painstorm/controller"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-	"painstorm/controller"
 )
 
 func NewRouter(weatherController *controller.WeatherController) *gin.Engine {
@@ -24,6 +25,7 @@ func NewRouter(weatherController *controller.WeatherController) *gin.Engine {
 	searchRouter.GET("/current", weatherController.Current)
 	searchRouter.GET("/generate", weatherController.Generate)
 	searchRouter.GET("/intensity", weatherController.RainIntensity)
+	searchRouter.GET("/temp-diff", weatherController.TempDiff)
 
 	return router
 }

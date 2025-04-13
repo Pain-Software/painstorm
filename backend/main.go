@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
 	"log"
 	"log/slog"
 	"net/http"
@@ -15,6 +13,13 @@ import (
 	"painstorm/repository"
 	"painstorm/router"
 	"painstorm/service"
+
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
@@ -24,6 +29,27 @@ func main() {
 	if err != nil {
 		fmt.Println("Error loading .env file")
 	}
+
+	credential := options.Credential{
+		Username: os.Getenv("MONGO_INITDB_ROOT_USERNAME"),
+		Password: os.Getenv("MONGO_INITDB_ROOT_PASSWORD"),
+	}
+
+	clientOpts := options.Client().ApplyURI(os.Getenv("MONGO_URI")).SetAuth(credential)
+
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	client, err := mongo.Connect(ctx, clientOpts)
+	if err != nil {
+		log.Fatalf("Failed to connect to MongoDB: %v", err)
+	}
+
+	db := client.Database("painstorm")
+	measurementCollection := db.Collection("measurements")
+
+	client.Ping(ctx, nil)
 
 	// Enable all origins
 	cfg := config.Get()
@@ -39,7 +65,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
 	}
-	weatherRepository := repository.NewWeatherRepositoryImpl(conn)
+	weatherRepository := repository.NewWeatherRepositoryImpl(conn, measurementCollection)
 
 	// Service
 	weatherService := service.NewWeatherServiceImpl(weatherRepository)
