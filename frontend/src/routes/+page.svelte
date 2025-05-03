@@ -1,69 +1,152 @@
 <script lang="ts">
-    import { env } from '$env/dynamic/public';
+	import { env } from '$env/dynamic/public';
 	import Download from 'lucide-svelte/icons/download';
 	import { Button } from '$lib/components/ui/button';
 	import { DatePickerWithRange } from '$lib/components/ui/datepicker';
-    import PlaceStats from '$lib/fragments/place-stats.svelte';
-    import PlacesTempDiffs from '$lib/fragments/places-temp-diffs.svelte';
-    import PlacesWithRainIntensity from '$lib/fragments/places-with-rain-intensity.svelte';
 	import { Input } from '$lib/components/ui/input';
-    import { Indicator } from '$lib/components/ui/indicator';
-	import { onMount } from "svelte";
-	
-    let api: null | boolean = $state(null);
-    let place = 'Testovací název místa';
+	import { Indicator } from '$lib/components/ui/indicator';
+	import { onMount } from 'svelte';
+	import ModeSwitcher from '$lib/fragments/mode-switcher.svelte';
 
-    onMount(async () => {
-        const route = new URL("/api/version", env.PUBLIC_BACKEND_URL);
-        const response = await fetch(route);
-        
-        api = response.ok;
+	import PagePlaceCurrentStats from '$lib/fragments/page-place-current-stats.svelte';
+	import PagePlaceHistoricStats from '$lib/fragments/page-place-historic-stats.svelte';
+	import PageRainIntensity from '$lib/fragments/page-rain-intensity.svelte';
 
-        const data = await response.json();
-    })
+	import { CloudRainIcon, MapPinHouseIcon, ThermometerIcon } from 'lucide-svelte';
+	import type { DateRange } from 'bits-ui';
+	import { CalendarDate } from '@internationalized/date';
 
+	const modes = [
+		{
+			label: 'Hledat aktuální data podle místa',
+			value: 'place-current',
+			icon: MapPinHouseIcon,
+			page: PagePlaceCurrentStats
+		},
+		{
+			label: 'Hledat historická data podle místa',
+			value: 'place-historic',
+			icon: MapPinHouseIcon,
+			page: PagePlaceHistoricStats
+		},
+		{
+			label: 'Hledat podle intenzity deště',
+			value: 'intensity',
+			icon: CloudRainIcon,
+			page: PageRainIntensity
+		},
+		{
+			label: 'Hledat rozdíly teplot',
+			value: 'temp_diff',
+			icon: ThermometerIcon,
+			page: PageRainIntensity
+		}
+	];
+
+	const now = new Date();
+
+	let api: null | boolean = $state(null);
+	let place = $state('');
+	let intensity = $state(undefined);
+	let mode = $state(modes[0]);
+	let longtitude = $state();
+	let latitude = $state();
+    let count = $state();
+
+	let PageComponent = $derived(mode.page);
+
+	let date: DateRange = $state({
+		start: new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate()).subtract({ days: 30 }),
+		end: new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate())
+	});
+
+	onMount(async () => {
+		const route = new URL('/api/version', env.PUBLIC_BACKEND_URL);
+		const response = await fetch(route);
+
+		api = response.ok;
+	});
+
+	$inspect(date);
 </script>
 
-<div class="flex justify-between items-center px-8 border-b h-16">
-    <div class="flex items-center space-x-2">
-        <Input type="search" placeholder="Název místa..." class="h-9 md:w-[100px] lg:w-[300px]" />
-        <Input type="search" placeholder="Zeměpisná šířka" class="h-9 md:w-[50px] lg:w-[100px]" />
-        <Input type="search" placeholder="Zeměpisná délka" class="h-9 md:w-[50px] lg:w-[100px]" />        
-    </div>
+<main class="flex h-screen flex-col">
+	<div class="flex h-[12vh] flex-col justify-center gap-2 border-b px-8">
+		<div class="grid w-full grid-cols-3 items-center">
+			<div class="justify-self-start">
+				<ModeSwitcher bind:selected={mode} {modes} />
+			</div>
 
-    <div class="flex items-center space-x-2">
-        <DatePickerWithRange />
-        <Button size="sm">
-            <Download class="mr-2 h-4 w-4" />
-            Hledat
-        </Button>
-        <Indicator variant={api == null ? "default" : api ? "online" : "offline"}>
-            API
-        </Indicator>
-    </div>
-</div>
+			<div class="flex w-full justify-center">
+				<h1 class="text-xl font-bold">Painstorm</h1>
+			</div>
 
-<div class="hidden flex-col md:flex">
-	<div class="flex-1 space-y-4 p-8 pt-6">
-		<div class="flex items-center justify-between space-y-2">
-			<h2 class="text-3xl font-bold tracking-tight">{place}</h2>
-			<div class="flex items-center space-x-2">
-				<Button size="sm">
-					<Download class="mr-2 h-4 w-4" />
-					Download
-				</Button>
+			<div class="flex w-full justify-end space-x-2">
+				<Indicator variant={api == null ? 'default' : api ? 'online' : 'offline'}>API</Indicator>
 			</div>
 		</div>
-		
-        <PlaceStats/>
-
-		<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-9">
-            <div class="col-span-3">
-                <PlacesTempDiffs/>                
-            </div>
-            <div class="col-span-3">
-                <PlacesWithRainIntensity value={69}/>
-            </div>
+		<div class="flex gap-2">
+			{#if mode.value == 'place-current'}
+				<Input
+					type="text"
+					placeholder="Název místa"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={place}
+				/>
+				<Input
+					type="number"
+					placeholder="Zeměpisná šířka"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={latitude}
+				/>
+				<Input
+					type="number"
+					placeholder="Zeměpisná délka"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={longtitude}
+				/>
+				<Input
+					type="number"
+					placeholder="Počet dní"
+					min={1}
+					step={1}
+					max={7}
+					class="h-9 md:w-[150px] lg:w-[200px]"
+                    bind:value={count}
+				/>
+            {:else if mode.value == 'place-historic'}
+                <Input
+					type="text"
+					placeholder="Název místa"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={place}
+				/>
+				<Input
+					type="number"
+					placeholder="Zeměpisná šířka"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={latitude}
+				/>
+				<Input
+					type="number"
+					placeholder="Zeměpisná délka"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={longtitude}
+				/>
+				<DatePickerWithRange bind:value={date} />
+			{:else if mode.value == 'intensity'}
+				<Input
+					type="number"
+					placeholder="Intenzita deště"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={intensity}
+				/>
+				<DatePickerWithRange bind:value={date} />
+			{/if}
 		</div>
 	</div>
-</div>
+
+	<div class="h-[88vh] flex-1">
+		<PageComponent {count} {place} {intensity} from={date.start} to={date.end} />
+	</div>
+</main>
