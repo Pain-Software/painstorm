@@ -6,6 +6,11 @@
     postgres:
       image: postgres:latest
       container_name: postgres_db
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
+        interval: 5s
+        timeout: 5s
+        retries: 5
       networks:
         - paintwork
       restart: unless-stopped
@@ -19,6 +24,7 @@
         - "5432:5432"
       volumes:
         - postgres_data:/var/lib/postgresql/data
+        - ./painstorm/migrations:/data/migrations
 
     backend:
       env_file:
@@ -65,9 +71,25 @@
       volumes:
         - mongo_data:/data/db
         - ./painstorm/init.d:/docker-entrypoint-initdb.d 
-
       networks:
         - paintwork
+
+    flyway:
+      image: flyway/flyway:9
+      container_name: flyway
+      depends_on:
+        postgres:
+          condition: service_healthy
+      networks:
+        - paintwork
+      env_file:
+        - .env
+      volumes:
+        - ./painstorm/migrations:/flyway/sql
+        - ./painstorm/flyway.conf:/flyway/conf/flyway.conf
+      command: migrate
+
+        
   volumes:
     postgres_data:
     mongo_data:
