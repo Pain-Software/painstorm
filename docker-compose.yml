@@ -1,7 +1,13 @@
+  networks:
+    paintwork:
   services:
+
+
     postgres:
       image: postgres:latest
       container_name: postgres_db
+      networks:
+        - paintwork
       restart: unless-stopped
       env_file:
         - ".env"
@@ -22,10 +28,13 @@
         dockerfile: ./backend/Dockerfile
       container_name: go_backend
       restart: unless-stopped
+      
       depends_on:
         - postgres
       ports:
         - "8080:8080"
+      networks:
+        - paintwork
 
     frontend:
       build:
@@ -39,7 +48,8 @@
         - "8081:8081" 
       environment:
         - NODE_ENV=production
-
+      networks:
+        - paintwork
     mongo:
       container_name: mongo_db
       image: mongo:latest
@@ -51,7 +61,8 @@
         - "27017:27017"
       volumes:
         - mongo_data:/data/db
-
+      networks:
+        - paintwork
   volumes:
     postgres_data:
     mongo_data:
