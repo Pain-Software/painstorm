@@ -54,13 +54,18 @@
       container_name: mongo_db
       image: mongo:latest
       restart: unless-stopped
+      
       environment:
         - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
         - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+        - MONGO_INITDB_DATABASE=painstorm
+
       ports:
         - "27017:27017"
       volumes:
         - mongo_data:/data/db
+        - ./painstorm/init.d:/docker-entrypoint-initdb.d 
+
       networks:
         - paintwork
   volumes:
