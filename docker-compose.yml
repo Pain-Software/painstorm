@@ -4,7 +4,9 @@
 
 
     postgres:
-      image: postgres:latest
+      build: 
+        context: .
+        dockerfile: ./painstorm/Dockerfile
       container_name: postgres_db
       healthcheck:
         test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER"]
@@ -25,6 +27,11 @@
       volumes:
         - postgres_data:/var/lib/postgresql/data
         - ./painstorm/migrations:/data/migrations
+      command: >
+        postgres
+        -c shared_preload_libraries=pg_cron
+        -c cron.database_name=painstorm
+
 
     backend:
       env_file:
@@ -46,6 +53,8 @@
       build:
         context: ./frontend
         dockerfile: Dockerfile
+        args:
+          - PUBLIC_BACKEND_URL=${PUBLIC_BACKEND_URL}
       container_name: node_frontend
       restart: unless-stopped
       depends_on:

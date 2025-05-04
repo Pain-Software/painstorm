@@ -3,10 +3,16 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+ARG PUBLIC_BACKEND_URL
+ENV PUBLIC_BACKEND_URL=$PUBLIC_BACKEND_URL
+
 COPY package*.json ./
 RUN npm install --force
 
 COPY . .
+
+RUN echo "PUBLIC_BACKEND_URL=$PUBLIC_BACKEND_URL" > .env
+
 RUN npm run build
 
 RUN npm prune --production --force
