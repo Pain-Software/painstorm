@@ -1,13 +1,10 @@
 <script lang="ts">
-	import _ from 'lodash';
+    import _ from 'lodash';
 	import { PUBLIC_BACKEND_URL } from '$env/static/public';
 	import * as Table from '$lib/components/ui/table';
 	import { ScrollArea } from '$lib/components/ui/scroll-area';
-	import type { ComponentType } from 'svelte';
-	import * as Card from '$lib/components/ui/card';
-	import { Skeleton } from '$lib/components/ui/skeleton';
 
-	const { place, from, to, intensity, count } = $props();
+	const { place, longtitude, latitude, from, to, weatherType } = $props();
 
 	interface Measurement {
 		id: number;
@@ -32,29 +29,28 @@
         cnt?: number;
 	}
 
-	interface Statistic {
-		name: string;
-		value: string;
-		description: string;
-		Icon: ComponentType;
-	}
-
-	let history = $state<Measurement[]>([]);
-	let stats = $state<Statistic[]>([]);
+	let history = $state<Measurement[][]>([]);
 	let isLoading = $state(true);
+
+    let noPlaceDefined = $derived(!place && (!longtitude || !latitude));
 
 	$effect(() => {
 		void place;
+        void longtitude;
+		void latitude;
 		void from;
 		void to;
 
-		if (!place || !from || !to) return;
+		if (noPlaceDefined || !from || !to || !weatherType) return;
 
-		async function getHistoryData() {
-			const url = new URL('/api/weather/search/retrieve', PUBLIC_BACKEND_URL);
+		async function getStableWeather() {
+			const url = new URL('/api/weather/search/stable-weather', PUBLIC_BACKEND_URL);
 			url.searchParams.set('place', String(place));
-			url.searchParams.set('from', String(new Date(from).valueOf() / 1000));
-			url.searchParams.set('to', String(new Date(to).valueOf() / 1000));
+            if (longtitude) url.searchParams.set('lon', String(longtitude))
+            if (latitude) url.searchParams.set('lat', String(latitude))
+			url.searchParams.set('from', String(from.toString()));
+			url.searchParams.set('to', String(to.toString()));
+            url.searchParams.set('weatherType', String(weatherType));
 
 			const response = await fetch(url);
 			const data = await response.json();
@@ -64,34 +60,35 @@
                 return;
             }
 				
-            history = data.toSorted((a: Measurement, b: Measurement) =>
-                Number(new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-            );
-
+            history = _.compact(data);
             isLoading = false;
 		}
 
-		const getHistoryDataDebounced = _.debounce(getHistoryData, 250);
+		const getStableWeatherDebounced = _.debounce(getStableWeather, 250);
 
-		getHistoryDataDebounced();
+		getStableWeatherDebounced();
 
 		// Optional: cancel on teardown (e.g., if component is destroyed)
 		return () => {
-			getHistoryDataDebounced.cancel();
+			getStableWeatherDebounced.cancel();
 		};
 	});
 </script>
 
-{#if !place}
+{#if noPlaceDefined}
 	<div class="grid h-full w-full place-items-center">
-		<h1 class="text-muted-foreground text-xl">Pro zobrazení statistik zadejte název místa</h1>
+		<h1 class="text-muted-foreground text-xl">Pro zobrazení statistik zadejte název místa.</h1>
 	</div>
+{:else if history.length == 0}
+    <div class="grid h-full w-full place-items-center">
+        <h1 class="text-muted-foreground text-xl">Pro dané místo nebyly nalezeny žádné výsledky.</h1>
+    </div>
 {:else}
 	<div class="hidden flex-col md:flex">
 		<div class="flex-1 p-8">
 			<div class="flex flex-col">
 				<h2 class="text-3xl font-bold tracking-tight">
-					Měření v {place}
+					Stabilní počasí v {place}
 				</h2>
                 <h3 class="text-xl text-muted-foreground">
                     Od {new Date(from.toString()).toLocaleDateString()} do {new Date(to.toString()).toLocaleDateString()}
@@ -105,7 +102,9 @@
 					<Table.Header>
 						<Table.Row>
 							<Table.Head>Počasí</Table.Head>
-							<Table.Head>Časové razítko</Table.Head>
+                            <Table.Head>Oblačnost</Table.Head>
+							<Table.Head>Začátek</Table.Head>
+							<Table.Head>Konec</Table.Head>
 							<Table.Head>Průměrná teplota</Table.Head>
 							<Table.Head>Minimální teplota</Table.Head>
 							<Table.Head>Maximální teplota</Table.Head>
@@ -120,22 +119,22 @@
 							<Table.Row>
 								<Table.Cell class="flex items-center gap-2">
 									<img
-										src={`https://openweathermap.org/img/wn/${row.weather[0].icon}@2x.png`}
+										src={`https://openweathermap.org/img/wn/${row[0].weather[0].icon}@2x.png`}
 										alt=""
 										class="h-12 w-12"
 									/>
-									<span>{row.weather[0].main}</span>
+									<span>{row[0].weather[0].main}</span>
 								</Table.Cell>
-								<Table.Cell class="font-medium"
-									>{new Date(row.timestamp).toLocaleString()}</Table.Cell
-								>
-								<Table.Cell>{row.temperature} °C</Table.Cell>
-								<Table.Cell>{row.min_temperature} °C</Table.Cell>
-								<Table.Cell>{row.max_temperature} °C</Table.Cell>
-								<Table.Cell>{row.humidity} %</Table.Cell>
-								<Table.Cell>{row.pressure} hPA</Table.Cell>
-								<Table.Cell>{row.wind_speed} m/s</Table.Cell>
-								<Table.Cell>{row.wind_degrees ? `${row.wind_degrees} °` : ""}</Table.Cell>
+                                <Table.Cell>{row[0].clouds} %</Table.Cell>
+								<Table.Cell>{new Date(row[0].timestamp).toLocaleDateString()}</Table.Cell>
+								<Table.Cell>{new Date(row[row.length - 1].timestamp).toLocaleDateString()}</Table.Cell>
+                                <Table.Cell>{row[0].temperature} °C</Table.Cell>
+								<Table.Cell>{row[0].min_temperature} °C</Table.Cell>
+								<Table.Cell>{row[0].max_temperature} °C</Table.Cell>
+								<Table.Cell>{row[0].humidity} %</Table.Cell>
+								<Table.Cell>{row[0].pressure} hPA</Table.Cell>
+								<Table.Cell>{row[0].wind_speed} m/s</Table.Cell>
+								<Table.Cell>{row[0].wind_degrees ? `${row[0].wind_degrees} °` : ""}</Table.Cell>
 							</Table.Row>
 						{/each}
 					</Table.Body>

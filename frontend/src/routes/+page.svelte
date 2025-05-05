@@ -1,20 +1,30 @@
 <script lang="ts">
-	import { env } from '$env/dynamic/public';
-	import Download from 'lucide-svelte/icons/download';
+	import { onMount } from 'svelte';
+	import { PUBLIC_BACKEND_URL } from '$env/static/public';
 	import { Button } from '$lib/components/ui/button';
 	import { DatePickerWithRange } from '$lib/components/ui/datepicker';
 	import { Input } from '$lib/components/ui/input';
 	import { Indicator } from '$lib/components/ui/indicator';
-	import { onMount } from 'svelte';
+	import * as Popover from '$lib/components/ui/popover';
 	import ModeSwitcher from '$lib/fragments/mode-switcher.svelte';
 
 	import PagePlaceCurrentStats from '$lib/fragments/page-place-current-stats.svelte';
 	import PagePlaceHistoricStats from '$lib/fragments/page-place-historic-stats.svelte';
 	import PageRainIntensity from '$lib/fragments/page-rain-intensity.svelte';
+	import PageStableWeather from '$lib/fragments/page-stable-weather.svelte';
+	import PageTempDiffs from "$lib/fragments/page-temp-diffs.svelte";
 
-	import { CloudRainIcon, MapPinHouseIcon, ThermometerIcon } from 'lucide-svelte';
+	import {
+		CalendarIcon,
+		CloudRainIcon,
+		MapPinHouseIcon,
+		ScaleIcon,
+		ThermometerIcon
+	} from 'lucide-svelte';
 	import type { DateRange } from 'bits-ui';
 	import { CalendarDate } from '@internationalized/date';
+	import { Calendar } from '$lib/components/ui/calendar';
+	import { cn } from 'tailwind-variants';
 
 	const modes = [
 		{
@@ -30,6 +40,12 @@
 			page: PagePlaceHistoricStats
 		},
 		{
+			label: 'Hledat stabilní počasí',
+			value: 'stable_weather',
+			icon: ScaleIcon,
+			page: PageStableWeather
+		},
+		{
 			label: 'Hledat podle intenzity deště',
 			value: 'intensity',
 			icon: CloudRainIcon,
@@ -39,7 +55,7 @@
 			label: 'Hledat rozdíly teplot',
 			value: 'temp_diff',
 			icon: ThermometerIcon,
-			page: PageRainIntensity
+			page: PageTempDiffs
 		}
 	];
 
@@ -51,17 +67,20 @@
 	let mode = $state(modes[0]);
 	let longtitude = $state();
 	let latitude = $state();
-    let count = $state();
+	let count = $state();
+	let weatherType = $state();
 
 	let PageComponent = $derived(mode.page);
 
 	let date: DateRange = $state({
-		start: new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate()).subtract({ days: 30 }),
+		start: new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate()).subtract({
+			days: 30
+		}),
 		end: new CalendarDate(now.getFullYear(), now.getMonth() + 1, now.getDate())
 	});
 
 	onMount(async () => {
-		const route = new URL('/api/version', env.PUBLIC_BACKEND_URL);
+		const route = new URL('/api/version', PUBLIC_BACKEND_URL);
 		const response = await fetch(route);
 
 		api = response.ok;
@@ -112,10 +131,54 @@
 					step={1}
 					max={7}
 					class="h-9 md:w-[150px] lg:w-[200px]"
-                    bind:value={count}
+					bind:value={count}
 				/>
-            {:else if mode.value == 'place-historic'}
-                <Input
+			{:else if mode.value == 'stable_weather'}
+				<Input
+					type="text"
+					placeholder="Název místa"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={place}
+				/>
+				<Input
+					type="number"
+					placeholder="Zeměpisná šířka"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={latitude}
+				/>
+				<Input
+					type="number"
+					placeholder="Zeměpisná délka"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={longtitude}
+				/>
+				<Input
+					type="text"
+					placeholder="Typ počasí"
+					class="h-9 md:w-[150px] lg:w-[200px]"
+					bind:value={weatherType}
+				/>
+				<DatePickerWithRange bind:value={date} />
+			{:else if mode.value == 'temp_diff'}
+				<Popover.Root>
+					<Popover.Trigger>
+						<Button
+							variant="outline"
+							class={cn(
+								'w-[280px] justify-start text-left font-normal',
+								!date.end && 'text-muted-foreground'
+							)}
+						>
+							<CalendarIcon class="mr-2 h-4 w-4" />
+							{date.end ? new Date(date.end.toString()).toLocaleDateString() : 'Pick a date'}
+						</Button>
+					</Popover.Trigger>
+					<Popover.Content class="w-auto p-0">
+						<Calendar bind:value={date.end} initialFocus />
+					</Popover.Content>
+				</Popover.Root>
+			{:else if mode.value == 'place-historic'}
+				<Input
 					type="text"
 					placeholder="Název místa"
 					class="h-9 md:w-[150px] lg:w-[200px]"
@@ -147,6 +210,6 @@
 	</div>
 
 	<div class="h-[88vh] flex-1">
-		<PageComponent {count} {place} {intensity} from={date.start} to={date.end} />
+		<PageComponent {weatherType} {count} {place} {intensity} from={date.start} to={date.end} />
 	</div>
 </main>
